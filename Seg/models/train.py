@@ -18,7 +18,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint, TQ
 
 def train_model(root_dir='EXP1', train_loader=None, val_loader=None, **model_kwargs):
     trainer = pl.Trainer(
-        accelerator='cpu',
+        accelerator='gpu',
         devices=1,
         default_root_dir=root_dir,
         max_epochs=180,
@@ -46,9 +46,9 @@ def train_model(root_dir='EXP1', train_loader=None, val_loader=None, **model_kwa
     else:
         # pl.seed_everything(42)  # To be reproducable
         model = SegModel(**model_kwargs)
-        trainer.fit(model, train_loader, val_loader)
+        trainer.fit(model, train_loader)
         # Load best checkpoint after training
-        model = SegModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+        # model = SegModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
     return model
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     train_dataset = MyDataset(data_path=data_path)
     train_loader = utils.data.DataLoader(
         train_dataset,
-        batch_size=2, shuffle=True, drop_last=True, pin_memory=True, num_workers=0)
+        batch_size=48, shuffle=True, drop_last=True, pin_memory=True, num_workers=4)
     model_kwargs = dict(lr=1e-4, n_class=2)
-    model, result = train_model(
+    model = train_model(
         root_dir='results/EXP1', train_loader=train_loader, **model_kwargs)
