@@ -5,8 +5,11 @@ import cv2
 import os
 import numpy as np
 import glob
+
+import torch
 from skimage import io
-import copy
+from models.plain_seg_model import SegModel
+from torchvision import transforms
 try:
     from osgeo import gdal
     USE_GDAL = True
@@ -24,7 +27,14 @@ logger.addHandler(sh)
 
 class AnnotateImage:
 
-    def __init__(self, path_dir, idx2color, use_gdal=None, img_formats=None, img_show_mode='origin', is_save_color=False):
+    def __init__(self,
+                 path_dir, idx2color, use_gdal=None, img_formats=None,
+                 img_show_mode='origin', is_save_color=False,
+                 ckpt=None
+                 ):
+        if ckpt is not None and os.path.exists(ckpt):
+            print("Found seg model at %s, loading..." % ckpt)
+            self.model = SegModel.load_from_checkpoint(ckpt).eval()
 
         if img_formats is None:
             img_formats = ['.jpg', '.tiff']
@@ -277,6 +287,11 @@ class AnnotateImage:
         if state:
             self.thres_mode = 'Canny'
 
+    def ch_model_mod(self, state, usr_data):
+        if state:
+            self.thres_mode = 'SegModel'
+            cv2.setTrackbarPos('threshold', '', 128)
+
     def ch_thres_INV(self, state, usr_data):
         if state:
             self.thres_mode_INV = True
@@ -339,11 +354,14 @@ class AnnotateImage:
         self.ori_mask_list = []
         self.delete_roi_pressed = False
         cv2.createButton("OTSU", self.ch_otsu_mod, '', cv2.QT_RADIOBOX, 0)
-        cv2.createButton("ADP_Mean", self.ch_adpmean_mod, '', cv2.QT_RADIOBOX, 1)
+        cv2.createButton("ADP_Mean", self.ch_adpmean_mod, '', cv2.QT_RADIOBOX, 0)
         cv2.createButton("ADP_Gaussian", self.ch_adpgaussian_mod, '', cv2.QT_RADIOBOX, 0)
         cv2.createButton("Canny", self.ch_canny_mod, '', cv2.QT_RADIOBOX, 0)
+        if hasattr(self, 'model'):
+            cv2.createButton("SegModel", self.ch_model_mod, '', cv2.QT_RADIOBOX, 1)
+
         cv2.createButton("INV", self.ch_thres_INV, '', cv2.QT_CHECKBOX | cv2.QT_NEW_BUTTONBAR, 1)
-        cv2.createButton("BoxFilter", self.ch_box_filter, '', cv2.QT_CHECKBOX, 1)
+        cv2.createButton("BoxFilter", self.ch_box_filter, '', cv2.QT_CHECKBOX, 0)
 
         cv2.createButton("origin", self.img2origin, '', cv2.QT_RADIOBOX | cv2.QT_NEW_BUTTONBAR, 1)
         cv2.createButton("equalize", self.img2equalize, '', cv2.QT_RADIOBOX, 0)
@@ -402,6 +420,18 @@ class AnnotateImage:
             blockSize = cv2.getTrackbarPos('blockSize', '')
             value = cv2.getTrackbarPos('threshold', '')
             box_mask = cv2.Canny(box_img_gray, blockSize, value)
+        elif "SegModel" == thres_mode:
+            value = cv2.getTrackbarPos('threshold', '')
+            value = value / 255.
+            img_patch = torch.from_numpy(box_img) / 255.
+            img_patch = torch.permute(img_patch, (2, 0, 1))
+            img_patch = img_patch.unsqueeze(0)
+            img_patch = transforms.Resize(size=(16, 256))(img_patch)
+            with torch.no_grad():
+                box_mask = self.model(img_patch)[0, 1, ...].cpu().numpy()
+            box_mask = 255*(box_mask > value).astype(np.uint8)
+            box_mask = cv2.resize(box_mask, box_img.shape[::-1][1:], cv2.INTER_NEAREST)
+
         box_img_area = box_img.shape[0] * box_img.shape[1]
         if self.box_filter:
             kOpen = np.ones((7, 3), np.uint8)
@@ -565,7 +595,7 @@ if __name__ == '__main__':
     # Y: 确定一个标注
     # ESC或关闭窗口键退出标注
 
-    img_path_dir = '..'
+    img_path_dir = '/Users/chenkeyan/MyCode/eiseg/cky_0729'
 
     idx2color = {
         # 0: (0, 0, 0),  # 背景不需要写
@@ -575,7 +605,8 @@ if __name__ == '__main__':
         0: 'background',
         1: 'foreground'
     }
-    annotator = AnnotateImage(path_dir=img_path_dir, idx2color=idx2color, img_formats='.jpg', is_save_color=True)
+    ckpt = 'models/ckpt/last.ckpt'
+    annotator = AnnotateImage(path_dir=img_path_dir, idx2color=idx2color, img_formats='.jpg', is_save_color=True, ckpt=ckpt)
     annotator.run()
 
 
