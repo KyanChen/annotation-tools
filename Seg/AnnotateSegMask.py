@@ -218,6 +218,7 @@ class AnnotateImage:
 
         else:
             ori_img = io.imread(img_file, as_gray=False)
+            ori_img = cv2.cvtColor(ori_img, cv2.COLOR_RGB2BGR)
             ori_h, ori_w, _ = ori_img.shape
 
         self._set_img_size_infos({'ori_wh': (ori_w, ori_h)})
@@ -434,8 +435,8 @@ class AnnotateImage:
 
         box_img_area = box_img.shape[0] * box_img.shape[1]
         if self.box_filter:
-            kOpen = np.ones((7, 3), np.uint8)
-            box_mask_tmp = cv2.morphologyEx(box_mask, cv2.MORPH_CLOSE, kOpen, iterations=3)
+            kOpen = np.ones((5, 3), np.uint8)
+            box_mask_tmp = cv2.morphologyEx(box_mask, cv2.MORPH_CLOSE, kOpen, iterations=2)
 
             contours, _ = cv2.findContours(box_mask_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             box_mask = np.zeros_like(box_mask_tmp)
