@@ -3,3 +3,5 @@ checkpoints
 data
 *.jpg
 *.png
+.idea
+.DS_Store
