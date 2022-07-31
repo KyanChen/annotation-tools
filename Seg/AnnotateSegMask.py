@@ -135,7 +135,7 @@ class AnnotateImage:
             color_mask = np.zeros((*ori_mask.shape, 3), np.uint8)
             for k, v in idx2color.items():
                 color_mask[ori_mask == k] = v
-            io.imsave(mask_file.replace('.png', '_color.png'), ori_mask)
+            io.imsave(mask_file.replace('.png', '_color.png'), color_mask)
 
     def ch2next(self):
         label_info_path = self.parent_dir + '/.label_infos.json'
@@ -593,7 +593,9 @@ if __name__ == '__main__':
     # Z: 取消一个已有的标注
     # D: 删除一个指定BOX标注
     # Y: 确定一个标注
+    # S: 保存当前标注
     # ESC或关闭窗口键退出标注
+    # Ctrl+P 打开自定义模式
 
     img_path_dir = '/Users/chenkeyan/MyCode/eiseg/cky_0729'
 
