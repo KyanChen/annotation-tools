@@ -39,6 +39,7 @@ class AnnotateImage:
         if img_formats is None:
             img_formats = ['.jpg', '.tiff']
 
+        self.use_gdal = use_gdal
         if use_gdal is None:
             self.use_gdal = USE_GDAL
         self.parent_dir = path_dir
@@ -331,7 +332,7 @@ class AnnotateImage:
 
 
     def init_windows(self):
-        cv2.namedWindow('Annotation_Window', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('Annotation_Window', cv2.WINDOW_NORMAL| cv2.WINDOW_GUI_EXPANDED)
         cv2.resizeWindow('Annotation_Window', 800, 600)
         cv2.moveWindow('Annotation_Window', 50, 50)
 
@@ -598,7 +599,7 @@ if __name__ == '__main__':
     # ESC或关闭窗口键退出标注
     # Ctrl+P 打开自定义模式
 
-    img_path_dir = '/Users/chenkeyan/MyCode/eiseg/cky_0729'
+    img_path_dir = r'D:\标图\20220801_资源_异常\data\cky_0729'
 
     idx2color = {
         # 0: (0, 0, 0),  # 背景不需要写
@@ -609,7 +610,10 @@ if __name__ == '__main__':
         1: 'foreground'
     }
     ckpt = 'models/ckpt/last.ckpt'
-    annotator = AnnotateImage(path_dir=img_path_dir, idx2color=idx2color, img_formats='.jpg', is_save_color=True, ckpt=ckpt)
+    annotator = AnnotateImage(
+        path_dir=img_path_dir, use_gdal=False, idx2color=idx2color,
+        img_formats='.jpg', is_save_color=True, ckpt=ckpt
+    )
     annotator.run()
 
 
