@@ -17,10 +17,10 @@ import copy
 # C 切换原图或者增强后的图像
 # ESC或关闭窗口键退出标注
 
-IMG_PATH_DIR = r"K:\Positive_Patches"
-CLASSES = ['0', '1', '3']
+IMG_PATH_DIR = r"J:\Levir-ShipV2\Positive_Patches"
+CLASSES = ['0']
 IMG_FORMAT = 'tiff'
-MODE = 'normal'
+MODE = 'cv2'
 
 SCALARS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (200, 5, 200)]
 # SCALARS = [(x, x, x) for x in range(0, 255, 2)]
@@ -145,7 +145,7 @@ class AnnotateImage:
         return left, top, right, bottom
 
     def read_img(self, file, mode):
-        if mode == 'normal':
+        if mode == 'cv2':
             ori_img = io.imread(file)
             if len(ori_img.shape) == 2:
                 ori_img = cv2.cvtColor(ori_img, cv2.COLOR_GRAY2BGR)
