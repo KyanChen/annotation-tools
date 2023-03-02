@@ -1,6 +1,9 @@
 import json
 import cv2
-from osgeo import gdal
+try:
+    from osgeo import gdal
+except:
+    pass
 import os
 import numpy as np
 import glob
@@ -17,7 +20,7 @@ import copy
 # C 切换原图或者增强后的图像
 # ESC或关闭窗口键退出标注
 
-IMG_PATH_DIR = r"J:\Levir-ShipV2\Positive_Patches"
+IMG_PATH_DIR = r"J:\Levir-ShipV2\apllication_uncompress_label_patches"
 CLASSES = ['0']
 IMG_FORMAT = 'tiff'
 MODE = 'cv2'
@@ -99,7 +102,7 @@ class AnnotateImage:
         txt_file = img_file.replace(IMG_FORMAT, 'txt')
         if len(self.labels):
             labels = self.labels.astype(str)
-            labels[:, 0:1] = np.array([CLASSES[x] for x in self.labels[:, 0].astype(np.int)]).reshape((-1, 1))
+            labels[:, 0:1] = np.array([CLASSES[x] for x in self.labels[:, 0].astype(int)]).reshape((-1, 1))
             np.savetxt(txt_file, labels, fmt=' %s %s %s %s %s', newline='\n')
         else:
             f = open(txt_file, 'w')
@@ -146,7 +149,7 @@ class AnnotateImage:
 
     def read_img(self, file, mode):
         if mode == 'cv2':
-            ori_img = io.imread(file)
+            ori_img = io.imread(file)[:, :, ::-1]
             if len(ori_img.shape) == 2:
                 ori_img = cv2.cvtColor(ori_img, cv2.COLOR_GRAY2BGR)
             origin_height, origin_width, _ = ori_img.shape
@@ -190,9 +193,11 @@ class AnnotateImage:
     def run(self):
         img_modes = ["Origin", "Equalize", "Clip"]
         cv2.namedWindow('Annotation_Window', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Annotation_Window", 1600, 900)
         while True:
             is_change_dir = False
             self.file_list = self.get_file_list(self.dir_list[self.dir_id])
+            print(self.file_list[0])
             flag_img_mode = 0
             while True:
                 if is_change_dir:
@@ -222,7 +227,7 @@ class AnnotateImage:
                         height_zoom = self.size_infos['present_height'] / self.size_infos['origin_height']
                         bbox[1::2] *= width_zoom
                         bbox[2::2] *= height_zoom
-                        class_id, left, top, right, bottom = bbox.astype(np.int)
+                        class_id, left, top, right, bottom = bbox.astype(int)
                         cv2.rectangle(img, (left, top), (right, bottom), SCALARS[class_id], 2)
                         cv2.putText(img, CLASSES[class_id], (left, top), cv2.FONT_HERSHEY_COMPLEX, 0.8, SCALARS[class_id], 1)
                     if not self.flag_is_draw_finished:
