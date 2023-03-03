@@ -20,7 +20,7 @@ import copy
 # C 切换原图或者增强后的图像
 # ESC或关闭窗口键退出标注
 
-IMG_PATH_DIR = r"J:\Levir-ShipV2\apllication_uncompress_label_patches"
+IMG_PATH_DIR = r"J:\Levir-ShipV2\train_test_slices_split\train"
 CLASSES = ['0']
 IMG_FORMAT = 'tiff'
 MODE = 'cv2'
